@@ -1,0 +1,15 @@
+{
+  "mode": "ssh_config",
+  "remote": {
+    "host": "LabServer",
+    "user": "",
+    "port": 22,
+    "tensorboard_base_path": "/mount/disk1/rl-hyr/pymarl/results/tb_logs",
+    "tensorboard_cmd": "/home/rl-hyr/.conda/envs/hyr2pymarl/bin/tensorboard",
+    "tensorboard_param_name": "local_results_path"
+  },
+  "local_tensorboard": {
+    "enabled": true,
+    "command": "/Users/envoutante/Documents/Project/ExpTracker/backend/venv/bin/tensorboard"
+  }
+}

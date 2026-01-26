@@ -1,0 +1,32 @@
+/* 全局样式 */
+
+/* 按钮图标与文字之间的间距 */
+/* 方法1: 给图标添加 display 和 margin */
+.el-button .el-icon {
+  display: inline-block !important;
+  margin-right: 6px !important;
+  vertical-align: middle !important;
+}
+
+/* 如果图标后面没有内容（只有图标的按钮），不添加右边距 */
+.el-button .el-icon:last-child {
+  margin-right: 0 !important;
+}
+
+/* 方法2: 使用 flex 布局让按钮内容有间距 */
+.el-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* 确保按钮内容不会因为 flex 而变形 */
+.el-button > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+
+

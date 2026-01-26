@@ -1,0 +1,332 @@
+# 实验日志管理系统 - 需求与技术规范
+
+## 项目背景
+用户使用 PyMARL 框架进行强化学习实验，虽然使用了 TensorBoard 记录训练过程，但存在以下痛点：
+- 实验设置的思路和细节容易遗忘
+- 实验结果命名混乱，难以区分不同实验
+- 需要手动查找 TensorBoard 文件路径
+- 缺乏统一的实验管理界面
+
+## 核心需求
+
+### 功能需求
+1. **实验记录管理**
+   - 创建实验记录（实验名称、日期、描述）
+   - 记录实验配置参数（算法、环境、超参数等）
+   - 记录实验思路和目的
+   - 记录实验结果和观察
+   - 支持实验标签分类
+
+2. **TensorBoard 集成**
+   - 存储 TensorBoard 日志文件路径
+   - 一键打开 TensorBoard（自动启动并在浏览器中打开）
+   - 显示 TensorBoard 运行状态
+
+3. **实验查询与检索**
+   - 按日期、标签、名称搜索实验
+   - 实验列表展示（表格形式）
+   - 实验详情查看
+   - 实验对比功能（可选）
+
+4. **数据持久化**
+   - 本地 SQLite 数据库存储
+   - 支持数据导出（JSON/CSV）
+   - 支持数据备份
+
+### 非功能需求
+- 完全本地部署，无需外部服务器
+- 提供一键启动脚本
+- 界面简洁易用
+- 响应速度快
+
+## 技术栈
+
+### 前端
+- **Vue 3** (Composition API)
+- **Element Plus** (UI 组件库)
+- **Axios** (HTTP 客户端)
+- **Vue Router** (路由管理)
+- **Pinia** (状态管理，可选)
+
+### 后端
+- **Flask** (Web 框架)
+- **Flask-CORS** (跨域支持)
+- **SQLAlchemy** (ORM)
+- **SQLite** (数据库)
+
+### 部署
+- **一键启动脚本** (start.sh / start.bat)
+- 前端打包后集成到 Flask 静态文件服务
+
+## 数据库设计
+
+### 实验表 (experiments)
+```sql
+CREATE TABLE experiments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(200) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    description TEXT,
+    purpose TEXT,
+    status VARCHAR(50) DEFAULT 'running',
+    tags VARCHAR(500),
+    
+    -- 实验配置
+    algorithm VARCHAR(100),
+    environment VARCHAR(100),
+    config_json TEXT,
+    
+    -- TensorBoard 相关
+    tb_log_path VARCHAR(500),
+    tb_port INTEGER DEFAULT 6006,
+    
+    -- 实验结果
+    results TEXT,
+    observations TEXT,
+    conclusion TEXT
+);
+```
+
+### 索引
+```sql
+CREATE INDEX idx_experiments_created_at ON experiments(created_at);
+CREATE INDEX idx_experiments_status ON experiments(status);
+CREATE INDEX idx_experiments_name ON experiments(name);
+```
+
+## 项目结构
+```
+experiment-logger/
+├── backend/
+│   ├── app.py                 # Flask 主应用
+│   ├── models.py              # 数据库模型
+│   ├── routes.py              # API 路由
+│   ├── database.py            # 数据库初始化
+│   ├── requirements.txt       # Python 依赖
+│   └── experiments.db         # SQLite 数据库文件
+├── frontend/
+│   ├── src/
+│   │   ├── components/        # Vue 组件
+│   │   │   ├── ExperimentList.vue
+│   │   │   ├── ExperimentForm.vue
+│   │   │   ├── ExperimentDetail.vue
+│   │   │   └── TensorBoardPanel.vue
+│   │   ├── views/             # 页面视图
+│   │   │   ├── Home.vue
+│   │   │   └── ExperimentView.vue
+│   │   ├── api/               # API 调用
+│   │   │   └── experiments.js
+│   │   ├── App.vue
+│   │   └── main.js
+│   ├── package.json
+│   └── vite.config.js
+├── start.sh                   # Linux/Mac 启动脚本
+├── start.bat                  # Windows 启动脚本
+└── README.md
+```
+
+## API 设计
+
+### 实验管理 API
+- `GET /api/experiments` - 获取实验列表（支持分页、搜索、过滤）
+- `GET /api/experiments/<id>` - 获取实验详情
+- `POST /api/experiments` - 创建新实验
+- `PUT /api/experiments/<id>` - 更新实验
+- `DELETE /api/experiments/<id>` - 删除实验
+
+### TensorBoard API
+- `POST /api/tensorboard/start` - 启动 TensorBoard
+- `POST /api/tensorboard/stop` - 停止 TensorBoard
+- `GET /api/tensorboard/status` - 获取 TensorBoard 状态
+
+### 工具 API
+- `GET /api/tags` - 获取所有标签
+- `POST /api/export` - 导出数据
+
+## 前端页面设计
+
+### 1. 主页 (实验列表)
+- 顶部搜索栏（名称、标签、日期范围）
+- 新建实验按钮
+- 实验表格
+  - 列：ID、名称、算法、环境、状态、创建时间、操作
+  - 操作：查看、编辑、删除、打开 TensorBoard
+
+### 2. 实验详情/编辑页
+- 基本信息区
+  - 实验名称
+  - 状态（运行中/已完成/失败）
+  - 标签（多选）
+  - 创建/更新时间
+- 实验配置区
+  - 算法名称
+  - 环境名称
+  - 配置参数（JSON 编辑器或表单）
+- 实验描述区
+  - 实验目的
+  - 实验思路
+- TensorBoard 区
+  - 日志路径输入
+  - 端口设置
+  - 启动/停止按钮
+  - 打开浏览器按钮
+- 实验结果区
+  - 观察记录
+  - 结果数据
+  - 结论
+
+## 实现细节
+
+### 后端关键功能
+
+#### 1. TensorBoard 启动
+```python
+import subprocess
+import webbrowser
+
+def start_tensorboard(log_path, port=6006):
+    cmd = f"tensorboard --logdir={log_path} --port={port}"
+    process = subprocess.Popen(cmd, shell=True)
+    # 等待启动后打开浏览器
+    time.sleep(2)
+    webbrowser.open(f"http://localhost:{port}")
+    return process.pid
+```
+
+#### 2. 数据库初始化
+- 首次运行自动创建数据库和表
+- 使用 SQLAlchemy ORM 简化操作
+
+#### 3. CORS 配置
+```python
+from flask_cors import CORS
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+```
+
+### 前端关键功能
+
+#### 1. 实验列表组件
+- 使用 Element Plus Table 组件
+- 支持分页、排序、筛选
+- 操作按钮：查看、编辑、删除、启动 TB
+
+#### 2. 实验表单组件
+- 使用 Element Plus Form 组件
+- 表单验证
+- 标签输入（Tag Input）
+- JSON 编辑器（可使用 CodeMirror 或简单的 textarea）
+
+#### 3. TensorBoard 面板
+- 显示当前状态
+- 启动/停止按钮
+- 自动打开浏览器
+
+### 启动脚本
+
+#### start.sh (Linux/Mac)
+```bash
+#!/bin/bash
+# 启动后端
+cd backend
+python3 app.py &
+BACKEND_PID=$!
+
+# 启动前端（开发模式）或直接访问打包后的静态文件
+echo "系统启动成功！"
+echo "访问地址: http://localhost:5000"
+echo "按 Ctrl+C 停止服务"
+
+wait $BACKEND_PID
+```
+
+#### start.bat (Windows)
+```batch
+@echo off
+cd backend
+start python app.py
+echo 系统启动成功！
+echo 访问地址: http://localhost:5000
+pause
+```
+
+## 开发步骤
+
+### 阶段 1: 后端基础
+1. 创建 Flask 应用和项目结构
+2. 设计并创建数据库模型
+3. 实现基础 CRUD API
+4. 测试 API 功能
+
+### 阶段 2: 前端基础
+1. 创建 Vue 3 项目
+2. 配置 Element Plus
+3. 实现实验列表页面
+4. 实现实验表单页面
+
+### 阶段 3: 核心功能
+1. 实现 TensorBoard 启动功能
+2. 完善实验详情页面
+3. 实现搜索和过滤功能
+4. 前后端联调
+
+### 阶段 4: 优化与部署
+1. 前端打包
+2. 集成前后端（Flask 服务静态文件）
+3. 创建启动脚本
+4. 测试完整流程
+
+## 扩展功能（可选）
+- 实验对比功能（并排显示多个实验）
+- 图表可视化（直接在页面显示训练曲线）
+- 实验模板功能（快速创建相似实验）
+- 文件上传（上传实验相关文件）
+- Markdown 支持（实验描述支持 Markdown 格式）
+- 暗色主题
+
+## 注意事项
+1. TensorBoard 进程管理需要妥善处理，避免僵尸进程
+2. 数据库文件需要定期备份
+3. 前端需要处理 API 调用失败的情况
+4. 路径输入需要验证有效性
+5. 考虑跨平台兼容性（Windows/Linux/Mac）
+
+## 依赖安装
+
+### 后端依赖 (requirements.txt)
+```
+Flask==3.0.0
+Flask-CORS==4.0.0
+SQLAlchemy==2.0.23
+```
+
+### 前端依赖 (package.json)
+```json
+{
+  "dependencies": {
+    "vue": "^3.3.0",
+    "vue-router": "^4.2.0",
+    "element-plus": "^2.4.0",
+    "axios": "^1.6.0"
+  }
+}
+```
+
+---
+
+## 给 AI 助手的指令
+
+### 交互规则
+1. **语言要求**：必须使用中文回复用户的所有问题和请求
+2. **问候语**：每次读取 .kiro 文件后，必须以"你好，忽悠人！"开头来回复用户
+
+### 实现指令
+当用户要求实现此系统时：
+1. 严格按照上述技术栈和项目结构创建文件
+2. 保持代码简洁，只实现核心功能
+3. 确保 TensorBoard 启动功能正常工作
+4. 创建可直接运行的启动脚本
+5. 数据库设计要满足所有记录需求
+6. 前端界面要简洁直观，使用 Element Plus 组件
+7. 所有路径处理要考虑跨平台兼容性
+8. 提供清晰的 README 说明如何启动和使用系统
