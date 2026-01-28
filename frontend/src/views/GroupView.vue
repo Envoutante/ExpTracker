@@ -98,7 +98,7 @@
             @click="showAddExperimentDialog"
             style="margin-left: 16px;"
           >
-            <el-icon style="color: white;"><CirclePlus /></el-icon>
+            <el-icon style="color: white; font-size: 14px;"><CirclePlus /></el-icon>
             添加实验结果
           </el-button>
           <el-button 
@@ -108,7 +108,7 @@
             @click="openGroupTensorBoard"
             style="margin-left: auto;"
           >
-            <el-icon style="color: white;"><Monitor /></el-icon>
+            <el-icon style="color: white; font-size: 14px;"><Monitor /></el-icon>
             批量打开 TensorBoard
           </el-button>
         </div>
@@ -148,15 +148,154 @@
           <el-icon><View /></el-icon>
           <span>观察记录</span>
         </div>
-        <el-input 
-          v-if="!isView"
-          v-model="form.observations" 
-          type="textarea" 
-          :rows="6" 
-          placeholder="记录对这组实验的整体观察..."
-          class="note-textarea"
-        />
-        <div v-else class="note-content">{{ form.observations || '暂无观察记录' }}</div>
+        
+        <!-- 查看模式 -->
+        <div v-if="isView" class="observation-view">
+          <div v-if="observations.lastUpdated" class="observation-time">
+            {{ formatObservationTime(observations.lastUpdated) }}
+          </div>
+          <div v-if="observations.text || (observations.images && observations.images.length > 0) || (observations.attachments && observations.attachments.length > 0)" class="observation-content">
+            <div v-if="observations.text" class="observation-text">{{ observations.text }}</div>
+            <div v-if="observations.images && observations.images.length > 0" class="observation-images">
+              <el-image
+                v-for="(img, imgIndex) in observations.images"
+                :key="imgIndex"
+                :src="img"
+                :preview-src-list="observations.images"
+                :initial-index="imgIndex"
+                fit="cover"
+                class="observation-image"
+                lazy
+              >
+                <template #error>
+                  <div class="image-error">
+                    <el-icon><Picture /></el-icon>
+                    <span>加载失败</span>
+                  </div>
+                </template>
+              </el-image>
+            </div>
+            
+            <!-- 附件列表（查看模式） -->
+            <div v-if="observations.attachments && observations.attachments.length > 0" class="attachments-section">
+              <div class="attachments-title">📎 附件</div>
+              <div class="attachments-list">
+                <div v-for="(att, index) in observations.attachments" :key="att.id || index" class="attachment-item attachment-item-view">
+                  <div class="attachment-icon">
+                    <el-icon><Document /></el-icon>
+                  </div>
+                  <div class="attachment-info">
+                    <span class="attachment-name">{{ att.name }}</span>
+                    <span class="attachment-size">{{ formatFileSize(att.size) }}</span>
+                  </div>
+                  <div class="attachment-actions">
+                    <el-button 
+                      size="small" 
+                      type="primary"
+                      text 
+                      @click="downloadAttachment(att)"
+                    >
+                      <el-icon><Download /></el-icon>
+                      下载
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else class="empty-observations">
+            暂无观察记录
+          </div>
+        </div>
+        
+        <!-- 编辑模式 -->
+        <div v-else class="observation-edit">
+          <el-input
+            v-model="newObservation.text"
+            type="textarea"
+            :rows="6"
+            placeholder="记录对这组实验的整体观察..."
+            class="observation-input"
+          />
+          <div class="observation-actions">
+            <el-upload
+              :auto-upload="false"
+              :on-change="handleImageSelect"
+              :show-file-list="false"
+              accept="image/*"
+              multiple
+            >
+              <el-button size="small">
+                <el-icon><Picture /></el-icon>
+                上传图片
+              </el-button>
+            </el-upload>
+            <el-upload
+              :auto-upload="false"
+              :on-change="handleCsvSelect"
+              :show-file-list="false"
+              accept=".csv"
+              multiple
+            >
+              <el-button size="small">
+                <el-icon><Document /></el-icon>
+                上传 CSV
+              </el-button>
+            </el-upload>
+            <span class="image-count" v-if="newObservation.images.length > 0">
+              已选择 {{ newObservation.images.length }} 张图片
+            </span>
+          </div>
+          <div v-if="newObservation.images.length > 0" class="preview-images">
+            <div v-for="(img, index) in newObservation.images" :key="index" class="preview-image-item">
+              <img :src="img" alt="预览" />
+              <el-button 
+                type="danger" 
+                size="small" 
+                circle 
+                @click="removePreviewImage(index)"
+                class="remove-btn"
+              >
+                <el-icon><Close /></el-icon>
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 附件列表（编辑模式） -->
+          <div v-if="newObservation.attachments.length > 0" class="attachments-section">
+            <div class="attachments-title">附件</div>
+            <div class="attachments-list">
+              <div v-for="(att, index) in newObservation.attachments" :key="att.id || index" class="attachment-item">
+                <div class="attachment-icon">
+                  <el-icon><Document /></el-icon>
+                </div>
+                <div class="attachment-info">
+                  <span class="attachment-name">{{ att.name }}</span>
+                  <span class="attachment-size">{{ formatFileSize(att.size) }}</span>
+                </div>
+                <div class="attachment-actions">
+                  <el-button 
+                    v-if="att.id" 
+                    size="small" 
+                    text 
+                    @click="downloadAttachment(att)"
+                  >
+                    <el-icon><Download /></el-icon>
+                  </el-button>
+                  <el-button 
+                    size="small" 
+                    type="danger" 
+                    text 
+                    @click="removeAttachment(index)"
+                  >
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 结论 -->
@@ -223,7 +362,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { experimentApi } from '../api/experiments'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
-  ArrowLeft, Edit, Check, Close, Document, Aim, View, Finished, List, Monitor, Download, CirclePlus
+  ArrowLeft, Edit, Check, Close, Document, Aim, View, Finished, List, Monitor, Download, CirclePlus, Picture, Delete
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -244,6 +383,20 @@ const saving = ref(false)
 const isView = ref(false)  // 默认为 false，在 loadGroup 中根据情况设置
 const originalForm = ref(null)
 
+// 观察记录相关
+const observations = ref({
+  text: '',
+  images: [],
+  attachments: [],
+  lastUpdated: null
+})
+
+const newObservation = ref({
+  text: '',
+  images: [],
+  attachments: []
+})
+
 // 使用路由名称判断是否为新建模式，更可靠
 const isNew = computed(() => route.name === 'NewGroup')
 
@@ -259,6 +412,17 @@ const loadGroup = async () => {
       experiments: [],
       created_at: null
     }
+    observations.value = {
+      text: '',
+      images: [],
+      attachments: [],
+      lastUpdated: null
+    }
+    newObservation.value = {
+      text: '',
+      images: [],
+      attachments: []
+    }
     isView.value = false
     return
   }
@@ -267,6 +431,43 @@ const loadGroup = async () => {
   try {
     const { data } = await experimentApi.getGroup(route.params.id)
     form.value = data
+    
+    // 解析观察记录
+    if (data.observations) {
+      try {
+        const parsed = JSON.parse(data.observations)
+        if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+          observations.value = {
+            text: parsed.text || '',
+            images: parsed.images || [],
+            attachments: parsed.attachments || [],
+            lastUpdated: parsed.lastUpdated || null
+          }
+        } else {
+          observations.value = {
+            text: data.observations,
+            images: [],
+            attachments: [],
+            lastUpdated: null
+          }
+        }
+      } catch (e) {
+        observations.value = {
+          text: data.observations,
+          images: [],
+          attachments: [],
+          lastUpdated: null
+        }
+      }
+    } else {
+      observations.value = {
+        text: '',
+        images: [],
+        attachments: [],
+        lastUpdated: null
+      }
+    }
+    
     // 默认进入查看模式
     isView.value = true
   } catch (error) {
@@ -278,12 +479,24 @@ const loadGroup = async () => {
 
 const toggleEdit = () => {
   originalForm.value = JSON.parse(JSON.stringify(form.value))
+  // 初始化编辑中的观察记录
+  newObservation.value = {
+    text: observations.value.text,
+    images: [...observations.value.images],
+    attachments: [...observations.value.attachments]
+  }
   isView.value = false
 }
 
 const cancelEdit = () => {
   if (originalForm.value) {
     form.value = JSON.parse(JSON.stringify(originalForm.value))
+  }
+  // 重置编辑中的观察记录
+  newObservation.value = {
+    text: observations.value.text,
+    images: [...observations.value.images],
+    attachments: [...observations.value.attachments]
   }
   isView.value = true
 }
@@ -296,6 +509,14 @@ const save = async () => {
   
   saving.value = true
   try {
+    // 将观察记录序列化为 JSON
+    const observationsData = JSON.stringify({
+      text: newObservation.value.text,
+      images: newObservation.value.images,
+      attachments: newObservation.value.attachments,
+      lastUpdated: new Date().toISOString()
+    })
+    
     if (isNew.value) {
       // 新建实验组
       const experimentIds = form.value.experiments?.map(exp => exp.id) || []
@@ -303,7 +524,7 @@ const save = async () => {
         name: form.value.name,
         description: form.value.description,
         purpose: form.value.purpose,
-        observations: form.value.observations,
+        observations: observationsData,
         conclusion: form.value.conclusion,
         experiment_ids: experimentIds
       })
@@ -316,10 +537,19 @@ const save = async () => {
         name: form.value.name,
         description: form.value.description,
         purpose: form.value.purpose,
-        observations: form.value.observations,
+        observations: observationsData,
         conclusion: form.value.conclusion
       })
       ElMessage.success('保存成功')
+      
+      // 更新查看模式的观察记录
+      observations.value = {
+        text: newObservation.value.text,
+        images: [...newObservation.value.images],
+        attachments: [...newObservation.value.attachments],
+        lastUpdated: new Date().toISOString()
+      }
+      
       isView.value = true
       loadGroup()
     }
@@ -607,10 +837,30 @@ const exportToHTML = () => {
     </div>
     ` : ''}
 
-    ${form.value.observations ? `
+    ${observations.value.text || observations.value.images.length > 0 || observations.value.attachments.length > 0 ? `
     <div class="section">
       <div class="section-title">👁️ 观察记录</div>
-      <div class="section-content">${form.value.observations}</div>
+      ${observations.value.text ? `<div class="section-content">${observations.value.text}</div>` : ''}
+      ${observations.value.images.length > 0 ? `
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 12px;">
+        ${observations.value.images.map(img => `
+        <img src="${img}" style="width: 100%; border-radius: 4px; border: 1px solid #e4e7ed;" />
+        `).join('')}
+      </div>
+      ` : ''}
+      ${observations.value.attachments.length > 0 ? `
+      <div style="margin-top: 12px;">
+        <strong>📎 附件：</strong>
+        <ul style="list-style: none; padding-left: 0;">
+          ${observations.value.attachments.map(att => `
+          <li style="padding: 8px 0; border-bottom: 1px solid #e4e7ed;">
+            <span style="color: #409eff;">📄 ${att.name}</span>
+            <span style="color: #909399; margin-left: 8px;">(${formatFileSize(att.size)})</span>
+          </li>
+          `).join('')}
+        </ul>
+      </div>
+      ` : ''}
     </div>
     ` : ''}
 
@@ -744,6 +994,63 @@ const addSelectedExperiments = async () => {
   }
 }
 
+// 观察记录相关方法
+const handleImageSelect = (file) => {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    newObservation.value.images.push(e.target.result)
+  }
+  reader.readAsDataURL(file.raw)
+}
+
+const handleCsvSelect = (file) => {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const base64 = e.target.result.split(',')[1]
+    newObservation.value.attachments.push({
+      name: file.name,
+      size: file.size,
+      data: base64,
+      type: 'csv'
+    })
+  }
+  reader.readAsDataURL(file.raw)
+}
+
+const removePreviewImage = (index) => {
+  newObservation.value.images.splice(index, 1)
+}
+
+const removeAttachment = (index) => {
+  newObservation.value.attachments.splice(index, 1)
+}
+
+const downloadAttachment = (attachment) => {
+  const link = document.createElement('a')
+  link.href = `data:text/csv;base64,${attachment.data}`
+  link.download = attachment.name
+  link.click()
+}
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+const formatObservationTime = (timestamp) => {
+  if (!timestamp) return '尚未编辑'
+  return '最后编辑：' + new Date(timestamp).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 onMounted(() => {
   loadGroup()
 })
@@ -792,12 +1099,14 @@ watch(() => route.params.id, () => {
 }
 
 .title-input :deep(.el-input__wrapper) {
-  box-shadow: none;
-  border-bottom: 2px solid #dcdfe6;
+  box-shadow: none !important;
+  border: none !important;
+  border-bottom: 2px solid #e4e7ed !important;
   border-radius: 0;
   padding: 8px 0;
   font-size: 28px;
   font-weight: 600;
+  background-color: transparent !important;
 }
 
 .title-input :deep(.el-input__inner) {
@@ -819,7 +1128,7 @@ watch(() => route.params.id, () => {
   gap: 24px;
   padding: 16px 0;
   margin-bottom: 32px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e4e7ed;
 }
 
 .meta-item {
@@ -852,7 +1161,7 @@ watch(() => route.params.id, () => {
   color: #303133;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid #e4e7ed;
 }
 
 .section-header .el-icon {
@@ -886,5 +1195,211 @@ watch(() => route.params.id, () => {
   font-size: 14px;
   background: #f9fafb;
   border-radius: 4px;
+}
+
+/* 观察记录样式 */
+.observation-view {
+  background: #f5f7fa;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e4e7ed;
+}
+
+.observation-time {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.observation-content {
+  line-height: 1.8;
+}
+
+.observation-text {
+  font-size: 15px;
+  color: #303133;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+
+.observation-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.observation-image {
+  width: 100%;
+  height: 150px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.observation-image :deep(.el-image__inner) {
+  transition: opacity 0.2s;
+}
+
+.observation-image:hover :deep(.el-image__inner) {
+  opacity: 0.85;
+}
+
+.image-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #c0c4cc;
+  font-size: 14px;
+}
+
+.image-error .el-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.empty-observations {
+  text-align: center;
+  color: #c0c4cc;
+  padding: 40px;
+  font-size: 14px;
+}
+
+.observation-edit {
+  background: #fff;
+}
+
+.observation-input {
+  margin-bottom: 12px;
+}
+
+.observation-input :deep(.el-textarea__inner) {
+  font-size: 15px;
+  line-height: 1.8;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+}
+
+.observation-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.image-count {
+  font-size: 13px;
+  color: #606266;
+}
+
+.preview-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.preview-image-item {
+  position: relative;
+  width: 100%;
+  height: 100px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.preview-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-image-item .remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+}
+
+.preview-image-item .remove-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* 附件样式 */
+.attachments-section {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.attachments-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.attachment-item-view {
+  background: #f8fafc;
+}
+
+.attachment-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #ecfdf5;
+  border-radius: 6px;
+  color: #10b981;
+  font-size: 18px;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-size {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.attachment-actions {
+  display: flex;
+  gap: 4px;
 }
 </style>

@@ -123,7 +123,7 @@
               </p>
               
               <el-tabs v-model="configOs" type="border-card">
-                <el-tab-pane label="Linux" name="linux">
+                <el-tab-pane label="Linux / macOS" name="linux">
                   <div class="tutorial-content">
                     <h4>1. 打开或创建 SSH Config 文件</h4>
                     <div class="code-block-wrapper">
@@ -152,74 +152,6 @@
                       • <code>User</code>: SSH 登录用户名<br>
                       • <code>Port</code>: SSH 端口（默认 22）<br>
                       • <code>IdentityFile</code>: 私钥文件路径（可选）
-                    </p>
-                    
-                    <h4>3. 使用跳板机（可选）</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">Host {{ tutorialParams.serverAlias }}
-  HostName {{ tutorialParams.serverIp }}
-  User {{ tutorialParams.username }}
-  Port {{ tutorialParams.port }}
-  ProxyJump {{ tutorialParams.jumpUser }}@{{ tutorialParams.jumpHost }}</pre>
-                      <el-button size="small" @click="copyToClipboard(`Host ${tutorialParams.serverAlias}\n  HostName ${tutorialParams.serverIp}\n  User ${tutorialParams.username}\n  Port ${tutorialParams.port}\n  ProxyJump {{ tutorialParams.jumpUser }}@{{ tutorialParams.jumpHost }}`)" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">如果需要通过跳板机连接，添加 <code>ProxyJump</code> 参数。</p>
-                    
-                    <h4>4. 保存并设置权限</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">chmod 600 ~/.ssh/config</pre>
-                      <el-button size="small" @click="copyToClipboard('chmod 600 ~/.ssh/config')" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">确保配置文件权限正确，否则 SSH 会拒绝使用。</p>
-                    
-                    <h4>5. 测试连接</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">ssh {{ tutorialParams.serverAlias }}</pre>
-                      <el-button size="small" @click="copyToClipboard(`ssh ${tutorialParams.serverAlias}`)" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">现在可以直接使用别名连接服务器了！</p>
-                  </div>
-                </el-tab-pane>
-                
-                <el-tab-pane label="macOS" name="macos">
-                  <div class="tutorial-content">
-                    <h4>1. 打开或创建 SSH Config 文件</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">nano ~/.ssh/config</pre>
-                      <el-button size="small" @click="copyToClipboard('nano ~/.ssh/config')" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">如果文件不存在，会自动创建。也可以使用 vim 或其他编辑器。</p>
-                    
-                    <h4>2. 添加主机配置</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">Host {{ tutorialParams.serverAlias }}
-  HostName {{ tutorialParams.serverIp }}
-  User {{ tutorialParams.username }}
-  Port {{ tutorialParams.port }}
-  IdentityFile ~/.ssh/id_rsa
-  UseKeychain yes
-  AddKeysToAgent yes</pre>
-                      <el-button size="small" @click="copyToClipboard(`Host ${tutorialParams.serverAlias}\n  HostName ${tutorialParams.serverIp}\n  User ${tutorialParams.username}\n  Port ${tutorialParams.port}\n  IdentityFile ~/.ssh/id_rsa\n  UseKeychain yes\n  AddKeysToAgent yes`)" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">
-                      <strong>参数说明：</strong><br>
-                      • <code>Host</code>: 主机别名，可以自定义（如 LabServer）<br>
-                      • <code>HostName</code>: 服务器 IP 地址或域名<br>
-                      • <code>User</code>: SSH 登录用户名<br>
-                      • <code>Port</code>: SSH 端口（默认 22）<br>
-                      • <code>IdentityFile</code>: 私钥文件路径（可选）<br>
-                      • <code>UseKeychain</code>: 将密钥保存到 macOS 钥匙串（推荐）<br>
-                      • <code>AddKeysToAgent</code>: 自动添加密钥到 ssh-agent
                     </p>
                     
                     <h4>3. 使用跳板机（可选）</h4>
@@ -327,11 +259,12 @@
                 二、配置 SSH 免密登录
               </h3>
               <p class="tutorial-desc">
-                配置免密登录后，无需每次输入密码即可连接服务器，提升使用体验。
+                配置免密登录后，无需每次输入密码即可连接服务器，提升使用体验。<br>
+                <strong>原理：</strong>将本地生成的公钥（id_rsa.pub）复制到服务器的 <code>~/.ssh/authorized_keys</code> 文件中，服务器通过验证公钥来确认你的身份。
               </p>
               
               <el-tabs v-model="keygenOs" type="border-card">
-                <el-tab-pane label="Linux" name="linux">
+                <el-tab-pane label="Linux / macOS" name="linux">
                   <div class="tutorial-content">
                     <h4>步骤 1：生成 SSH 密钥对</h4>
                     <div class="code-block-wrapper">
@@ -345,6 +278,15 @@
                       • 询问保存位置时，直接回车使用默认路径 <code>~/.ssh/id_rsa</code><br>
                       • 询问密码时，可以直接回车（不设置密码）或输入密码（更安全）
                     </p>
+                    
+                    <h4>查看生成的公钥（可选）</h4>
+                    <div class="code-block-wrapper">
+                      <pre class="code-block">cat ~/.ssh/id_rsa.pub</pre>
+                      <el-button size="small" @click="copyToClipboard('cat ~/.ssh/id_rsa.pub')" class="copy-btn">
+                        <el-icon><CopyDocument /></el-icon>
+                      </el-button>
+                    </div>
+                    <p class="tip">可以查看公钥内容，通常以 <code>ssh-rsa</code> 开头。</p>
                     
                     <h4>步骤 2：复制公钥到服务器</h4>
                     <div class="code-block-wrapper">
@@ -372,66 +314,6 @@
                       </el-button>
                     </div>
                     <p class="tip">如果配置成功，应该无需输入密码即可登录！</p>
-                    
-                    <div class="warning-box">
-                      <strong>⚠️ 故障排查：</strong><br>
-                      如果仍需要密码，检查服务器端权限：<br>
-                      <code>chmod 700 ~/.ssh</code><br>
-                      <code>chmod 600 ~/.ssh/authorized_keys</code>
-                    </div>
-                  </div>
-                </el-tab-pane>
-                
-                <el-tab-pane label="macOS" name="macos">
-                  <div class="tutorial-content">
-                    <h4>步骤 1：生成 SSH 密钥对</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">ssh-keygen -t rsa -b 4096</pre>
-                      <el-button size="small" @click="copySshKeygen" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">
-                      按提示操作：<br>
-                      • 询问保存位置时，直接回车使用默认路径 <code>~/.ssh/id_rsa</code><br>
-                      • 询问密码时，可以直接回车（不设置密码）或输入密码（更安全）
-                    </p>
-                    
-                    <h4>步骤 2：复制公钥到服务器</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">ssh-copy-id {{ tutorialParams.username }}@{{ tutorialParams.serverIp }}</pre>
-                      <el-button size="small" @click="copyToClipboard('ssh-copy-id ' + tutorialParams.username + '@' + tutorialParams.serverIp)" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">
-                      如果使用了 SSH Config 别名：
-                    </p>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">ssh-copy-id {{ tutorialParams.serverAlias }}</pre>
-                      <el-button size="small" @click="copyToClipboard('ssh-copy-id ' + tutorialParams.serverAlias)" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">输入一次服务器密码后，公钥会自动添加到服务器的 <code>~/.ssh/authorized_keys</code> 文件。</p>
-                    
-                    <h4>步骤 3：测试免密登录</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">ssh {{ tutorialParams.serverAlias }}</pre>
-                      <el-button size="small" @click="copyToClipboard('ssh ' + tutorialParams.serverAlias)" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">如果配置成功，应该无需输入密码即可登录！</p>
-                    
-                    <h4>额外步骤：添加密钥到 macOS 钥匙串（可选）</h4>
-                    <div class="code-block-wrapper">
-                      <pre class="code-block">ssh-add --apple-use-keychain ~/.ssh/id_rsa</pre>
-                      <el-button size="small" @click="copyToClipboard('ssh-add --apple-use-keychain ~/.ssh/id_rsa')" class="copy-btn">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
-                    </div>
-                    <p class="tip">这样密钥会保存到 macOS 钥匙串，重启后无需重新添加。</p>
                     
                     <div class="warning-box">
                       <strong>⚠️ 故障排查：</strong><br>
@@ -457,6 +339,24 @@
                       • 询问保存位置时，直接回车使用默认路径 <code>C:\Users\你的用户名\.ssh\id_rsa</code><br>
                       • 询问密码时，可以直接回车（不设置密码）或输入密码（更安全）
                     </p>
+                    
+                    <h4>查看生成的公钥（可选）</h4>
+                    <div class="code-block-wrapper">
+                      <pre class="code-block">type %USERPROFILE%\.ssh\id_rsa.pub</pre>
+                      <el-button size="small" @click="copyToClipboard('type %USERPROFILE%\\.ssh\\id_rsa.pub')" class="copy-btn">
+                        <el-icon><CopyDocument /></el-icon>
+                      </el-button>
+                    </div>
+                    <p class="tip">可以查看公钥内容，通常以 <code>ssh-rsa</code> 开头。</p>
+                    
+                    <h4>步骤 2：复制公钥到服务器</h4>
+                    <div class="code-block-wrapper">
+                      <pre class="code-block">type %USERPROFILE%\.ssh\id_rsa.pub</pre>
+                      <el-button size="small" @click="copyToClipboard('type %USERPROFILE%\\.ssh\\id_rsa.pub')" class="copy-btn">
+                        <el-icon><CopyDocument /></el-icon>
+                      </el-button>
+                    </div>
+                    <p class="tip">可以查看公钥内容，通常以 <code>ssh-rsa</code> 开头。</p>
                     
                     <h4>步骤 2：复制公钥到服务器</h4>
                     <p class="tip">Windows 可能没有 <code>ssh-copy-id</code> 命令，需要手动复制：</p>
@@ -656,7 +556,7 @@ chmod 600 ~/.ssh/authorized_keys</pre>
                   </div>
                 </el-form-item>
                 
-                <div style="background: #f5f7fa; padding: 12px; border-radius: 4px; font-size: 13px; color: #606266; line-height: 1.6; margin-bottom: 20px;">
+                <div class="help-text" style="margin-bottom: 20px;">
                   <strong>提示：</strong>需要配置 SSH 免密登录才能正常使用。<br>
                   如果使用跳板机或 Tailscale 等复杂网络环境，推荐使用 SSH Config 别名方式。
                 </div>
@@ -893,7 +793,7 @@ chmod 600 ~/.ssh/authorized_keys</pre>
               </div>
             </div>
             
-            <div style="background: #f5f7fa; padding: 12px; border-radius: 4px; font-size: 13px; color: #606266; line-height: 1.6; margin-top: 20px;">
+            <div class="help-text" style="margin-top: 20px;">
               <strong>💡 使用说明：</strong><br>
               • 算法：配置常用的算法名称，如 QMIX、QPLEX 等<br>
               • 环境：配置环境名称及其对应的地图列表<br>
@@ -969,7 +869,7 @@ chmod 600 ~/.ssh/authorized_keys</pre>
               </div>
             </div>
             
-            <div style="background: #f5f7fa; padding: 12px; border-radius: 4px; font-size: 13px; color: #606266; line-height: 1.6; margin-top: 20px;">
+            <div class="help-text" style="margin-top: 20px;">
               <strong>说明：</strong><br>
               • 勾选的模块会在新建实验页显示<br>
               • 使用上下箭头调整模块的显示顺序<br>
@@ -1042,9 +942,155 @@ chmod 600 ~/.ssh/authorized_keys</pre>
               </div>
             </div>
             
-            <div style="background: #f5f7fa; padding: 12px; border-radius: 4px; font-size: 13px; color: #606266; line-height: 1.6; margin-top: 20px;">
+            <div class="help-text" style="margin-top: 20px;">
               <strong>说明：</strong><br>
               • 勾选的模块会在实验详情页显示<br>
+              • 使用上下箭头调整模块的显示顺序<br>
+              • 配置会自动保存到浏览器本地存储
+            </div>
+          </el-card>
+          
+          <!-- 实验组创建页模块配置 -->
+          <el-card style="margin-bottom: 20px;">
+            <template #header>
+              <div class="card-header">
+                <span class="card-title">📑 实验组创建页模块配置</span>
+                <div style="display: flex; gap: 8px;">
+                  <el-button v-if="!isEditingNewGroup" size="small" @click="enableNewGroupEdit">
+                    <el-icon><Edit /></el-icon>
+                    编辑
+                  </el-button>
+                  <template v-else>
+                    <el-button size="small" @click="cancelNewGroupEdit">
+                      <el-icon><Close /></el-icon>
+                      取消
+                    </el-button>
+                    <el-button type="primary" size="small" @click="saveNewGroupModulesConfig">
+                      <el-icon><Check /></el-icon>
+                      保存
+                    </el-button>
+                  </template>
+                </div>
+              </div>
+            </template>
+            
+            <el-alert
+              title="自定义实验组创建页显示的模块，可以启用/禁用模块或调整显示顺序"
+              type="info"
+              :closable="false"
+              style="margin-bottom: 20px;"
+            />
+            
+            <div class="module-list">
+              <div 
+                v-for="(module, index) in newGroupModules" 
+                :key="module.id"
+                class="module-item"
+              >
+                <div class="module-info">
+                  <el-checkbox 
+                    v-model="module.enabled" 
+                    :disabled="!isEditingNewGroup"
+                    size="large"
+                  >
+                    <span style="font-size: 15px; font-weight: 500;">{{ module.name }}</span>
+                  </el-checkbox>
+                </div>
+                <div class="module-actions" v-if="isEditingNewGroup">
+                  <el-button 
+                    size="small" 
+                    :disabled="index === 0"
+                    @click="moveNewGroupModule(index, -1)"
+                  >
+                    <el-icon><ArrowUp /></el-icon>
+                  </el-button>
+                  <el-button 
+                    size="small"
+                    :disabled="index === newGroupModules.length - 1"
+                    @click="moveNewGroupModule(index, 1)"
+                  >
+                    <el-icon><ArrowDown /></el-icon>
+                  </el-button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="help-text" style="margin-top: 20px;">
+              <strong>说明：</strong><br>
+              • 勾选的模块会在实验组创建页显示<br>
+              • 使用上下箭头调整模块的显示顺序<br>
+              • 配置会自动保存到浏览器本地存储
+            </div>
+          </el-card>
+          
+          <!-- 实验组详情页模块配置 -->
+          <el-card style="margin-bottom: 20px;">
+            <template #header>
+              <div class="card-header">
+                <span class="card-title">📁 实验组详情页模块配置</span>
+                <div style="display: flex; gap: 8px;">
+                  <el-button v-if="!isEditingGroupView" size="small" @click="enableGroupViewEdit">
+                    <el-icon><Edit /></el-icon>
+                    编辑
+                  </el-button>
+                  <template v-else>
+                    <el-button size="small" @click="cancelGroupViewEdit">
+                      <el-icon><Close /></el-icon>
+                      取消
+                    </el-button>
+                    <el-button type="primary" size="small" @click="saveGroupViewModulesConfig">
+                      <el-icon><Check /></el-icon>
+                      保存
+                    </el-button>
+                  </template>
+                </div>
+              </div>
+            </template>
+            
+            <el-alert
+              title="自定义实验组详情页显示的模块，可以启用/禁用模块或调整显示顺序"
+              type="info"
+              :closable="false"
+              style="margin-bottom: 20px;"
+            />
+            
+            <div class="module-list">
+              <div 
+                v-for="(module, index) in groupViewModules" 
+                :key="module.id"
+                class="module-item"
+              >
+                <div class="module-info">
+                  <el-checkbox 
+                    v-model="module.enabled" 
+                    :disabled="!isEditingGroupView"
+                    size="large"
+                  >
+                    <span style="font-size: 15px; font-weight: 500;">{{ module.name }}</span>
+                  </el-checkbox>
+                </div>
+                <div class="module-actions" v-if="isEditingGroupView">
+                  <el-button 
+                    size="small" 
+                    :disabled="index === 0"
+                    @click="moveGroupViewModule(index, -1)"
+                  >
+                    <el-icon><ArrowUp /></el-icon>
+                  </el-button>
+                  <el-button 
+                    size="small"
+                    :disabled="index === groupViewModules.length - 1"
+                    @click="moveGroupViewModule(index, 1)"
+                  >
+                    <el-icon><ArrowDown /></el-icon>
+                  </el-button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="help-text" style="margin-top: 20px;">
+              <strong>说明：</strong><br>
+              • 勾选的模块会在实验组详情页显示<br>
               • 使用上下箭头调整模块的显示顺序<br>
               • 配置会自动保存到浏览器本地存储
             </div>
@@ -1054,7 +1100,7 @@ chmod 600 ~/.ssh/authorized_keys</pre>
           <el-card>
             <template #header>
               <div class="card-header">
-                <span class="card-title">🏷️ 实验标签配置</span>
+                <span class="card-title">🔖 实验标签配置</span>
                 <div style="display: flex; gap: 8px;">
                   <el-button v-if="!isEditingTags" size="small" @click="enableTagsEdit">
                     <el-icon><Edit /></el-icon>
@@ -1124,7 +1170,7 @@ chmod 600 ~/.ssh/authorized_keys</pre>
               </div>
             </div>
             
-            <div style="background: #f5f7fa; padding: 12px; border-radius: 4px; font-size: 13px; color: #606266; line-height: 1.6; margin-top: 20px;">
+            <div class="help-text" style="margin-top: 20px;">
               <strong>💡 使用说明：</strong><br>
               • 标签：配置常用的标签名称，如 baseline、ablation、final 等<br>
               • 创建实验时只能从列表中选择标签
@@ -1195,6 +1241,29 @@ const newExpModules = ref([
 
 const isEditingNewExpModules = ref(false)
 const originalNewExpModules = ref(null)
+
+// 实验组详情页模块配置
+const groupViewModules = ref([
+  { id: 'description', name: '实验组描述', enabled: true, order: 1 },
+  { id: 'purpose', name: '实验目的', enabled: true, order: 2 },
+  { id: 'experiments', name: '包含的实验结果', enabled: true, order: 3 },
+  { id: 'observations', name: '观察记录', enabled: true, order: 4 },
+  { id: 'conclusion', name: '结论与下一步', enabled: true, order: 5 }
+])
+
+const isEditingGroupView = ref(false)
+const originalGroupViewModules = ref(null)
+
+// 实验组创建页模块配置
+const newGroupModules = ref([
+  { id: 'description', name: '实验组描述', enabled: true, order: 1 },
+  { id: 'purpose', name: '实验目的', enabled: true, order: 2 },
+  { id: 'observations', name: '观察记录', enabled: true, order: 3 },
+  { id: 'conclusion', name: '结论与下一步', enabled: true, order: 4 }
+])
+
+const isEditingNewGroup = ref(false)
+const originalNewGroupModules = ref(null)
 
 // 标签配置
 const experimentTags = ref([])
@@ -1597,6 +1666,28 @@ const loadTagsConfig = () => {
   }
 }
 
+const loadGroupViewModulesConfig = () => {
+  const saved = localStorage.getItem('groupViewModules')
+  if (saved) {
+    try {
+      groupViewModules.value = JSON.parse(saved)
+    } catch (e) {
+      console.error('加载实验组详情页模块配置失败', e)
+    }
+  }
+}
+
+const loadNewGroupModulesConfig = () => {
+  const saved = localStorage.getItem('newGroupModules')
+  if (saved) {
+    try {
+      newGroupModules.value = JSON.parse(saved)
+    } catch (e) {
+      console.error('加载实验组创建页模块配置失败', e)
+    }
+  }
+}
+
 const enableTagsEdit = () => {
   originalTags.value = JSON.parse(JSON.stringify(experimentTags.value))
   isEditingTags.value = true
@@ -1660,11 +1751,75 @@ const moveNewExpModule = (index, direction) => {
   })
 }
 
+const enableGroupViewEdit = () => {
+  originalGroupViewModules.value = JSON.parse(JSON.stringify(groupViewModules.value))
+  isEditingGroupView.value = true
+}
+
+const cancelGroupViewEdit = () => {
+  if (originalGroupViewModules.value) {
+    groupViewModules.value = JSON.parse(JSON.stringify(originalGroupViewModules.value))
+  }
+  isEditingGroupView.value = false
+}
+
+const saveGroupViewModulesConfig = () => {
+  localStorage.setItem('groupViewModules', JSON.stringify(groupViewModules.value))
+  isEditingGroupView.value = false
+  ElMessage.success('实验组详情页模块配置已保存')
+}
+
+const moveGroupViewModule = (index, direction) => {
+  const newIndex = index + direction
+  if (newIndex < 0 || newIndex >= groupViewModules.value.length) return
+  
+  const temp = groupViewModules.value[index]
+  groupViewModules.value[index] = groupViewModules.value[newIndex]
+  groupViewModules.value[newIndex] = temp
+  
+  groupViewModules.value.forEach((module, idx) => {
+    module.order = idx + 1
+  })
+}
+
+const enableNewGroupEdit = () => {
+  originalNewGroupModules.value = JSON.parse(JSON.stringify(newGroupModules.value))
+  isEditingNewGroup.value = true
+}
+
+const cancelNewGroupEdit = () => {
+  if (originalNewGroupModules.value) {
+    newGroupModules.value = JSON.parse(JSON.stringify(originalNewGroupModules.value))
+  }
+  isEditingNewGroup.value = false
+}
+
+const saveNewGroupModulesConfig = () => {
+  localStorage.setItem('newGroupModules', JSON.stringify(newGroupModules.value))
+  isEditingNewGroup.value = false
+  ElMessage.success('实验组创建页模块配置已保存')
+}
+
+const moveNewGroupModule = (index, direction) => {
+  const newIndex = index + direction
+  if (newIndex < 0 || newIndex >= newGroupModules.value.length) return
+  
+  const temp = newGroupModules.value[index]
+  newGroupModules.value[index] = newGroupModules.value[newIndex]
+  newGroupModules.value[newIndex] = temp
+  
+  newGroupModules.value.forEach((module, idx) => {
+    module.order = idx + 1
+  })
+}
+
 onMounted(() => {
   loadConfig()
   loadNotebookConfig()
   loadPresetsConfig()
   loadNewExpModulesConfig()
+  loadGroupViewModulesConfig()
+  loadNewGroupModulesConfig()
   loadTagsConfig()
 })
 </script>
@@ -1839,6 +1994,16 @@ onMounted(() => {
   opacity: 1;
 }
 
+/* 帮助文本样式 */
+.help-text {
+  background: #f5f7fa;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.6;
+}
+
 .module-list {
   display: flex;
   flex-direction: column;
@@ -1890,7 +2055,7 @@ onMounted(() => {
   border-bottom: 1px solid #e4e7ed;
 }
 
-.preset-section-title .el-icon {
+.preset-section-title > .el-icon {
   font-size: 18px;
   color: #409eff;
 }

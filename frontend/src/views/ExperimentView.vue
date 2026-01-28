@@ -2186,12 +2186,14 @@ onUnmounted(() => {
 }
 
 .title-input :deep(.el-input__wrapper) {
-  box-shadow: none;
-  border-bottom: 2px solid #dcdfe6;
+  box-shadow: none !important;
+  border: none !important;
+  border-bottom: 2px solid #dcdfe6 !important;
   border-radius: 0;
   padding: 8px 0;
   font-size: 28px;
   font-weight: 600;
+  background-color: transparent !important;
 }
 
 .title-input :deep(.el-input__inner) {
