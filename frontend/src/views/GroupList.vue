@@ -5,7 +5,7 @@
         <h2 style="margin: 0;">实验组列表</h2>
       </el-col>
       <el-col :span="4">
-        <el-segmented v-model="viewMode" :options="viewModeOptions" size="default" style="width: 100%;">
+        <el-segmented v-model="viewMode" :options="viewModeOptions" size="default" style="width: 100%;" class="group-viewmode-segmented">
           <template #default="{ item }">
             <div style="display: flex; align-items: center; justify-content: center; padding: 4px 12px;">
               <el-icon style="margin-right: 4px;">

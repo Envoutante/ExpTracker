@@ -8,9 +8,10 @@
       <div class="header-right">
         <el-switch
           v-model="isDark"
+          class="theme-toggle-switch"
           inline-prompt
-          :active-icon="Moon"
-          :inactive-icon="Sunny"
+          :active-icon="MoonSvgIcon"
+          :inactive-icon="SunSvgIcon"
           @change="toggleTheme"
           size="large"
         />
@@ -49,9 +50,26 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, h, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
-import { Calendar, List, Setting, Download, Folder, Moon, Sunny } from '@element-plus/icons-vue'
+import { Calendar, List, Setting, Download, Folder } from '@element-plus/icons-vue'
+
+import sunUrl from './static/sun.svg?url'
+import moonUrl from './static/moon.svg?url'
+
+const SunSvgIcon = markRaw({
+  name: 'SunSvgIcon',
+  render() {
+    return h('img', { src: sunUrl, alt: 'sun', class: 'theme-toggle-icon' })
+  },
+})
+
+const MoonSvgIcon = markRaw({
+  name: 'MoonSvgIcon',
+  render() {
+    return h('img', { src: moonUrl, alt: 'moon', class: 'theme-toggle-icon' })
+  },
+})
 
 const route = useRoute()
 const activeMenu = computed(() => route.path)
@@ -113,6 +131,30 @@ body {
   --main-bg: #ffffff;
   --card-bg: #ffffff;
   --hover-bg: #ecf5ff;
+
+  /* 语义色（与 Element Plus 默认日间色一致） */
+  --accent-primary: #409eff;
+  --accent-primary-hover: #66b1ff;
+  --accent-primary-active: #337ecc;
+  --accent-success: #67c23a;
+  --accent-success-hover: #85ce61;
+  --accent-success-active: #529b2e;
+  --accent-warning: #e6a23c;
+  --accent-warning-hover: #ebb563;
+  --accent-warning-active: #b88230;
+  --accent-danger: #f56c6c;
+  --accent-danger-hover: #f78989;
+  --accent-danger-active: #c45656;
+  --accent-info: #909399;
+  --accent-info-hover: #a6a9ad;
+  --accent-info-active: #73767a;
+
+  /* Element Plus token 对齐（让其它组件也能用同一套语义色） */
+  --el-color-primary: var(--accent-primary);
+  --el-color-success: var(--accent-success);
+  --el-color-warning: var(--accent-warning);
+  --el-color-danger: var(--accent-danger);
+  --el-color-info: var(--accent-info);
 }
 
 /* CSS 变量 - 夜间模式 */
@@ -131,6 +173,29 @@ body {
   --main-bg: #1a1a1a;
   --card-bg: #2d2d2d;
   --hover-bg: #363636;
+
+  /* 语义色：保持与日间一致的“语义”（蓝/绿/橙/红/灰），但调整亮度/饱和度以适配暗黑背景 */
+  --accent-primary: #3a8ee6;
+  --accent-primary-hover: #5aa6ff;
+  --accent-primary-active: #2f73b8;
+  --accent-success: #5daf34;
+  --accent-success-hover: #79c35a;
+  --accent-success-active: #4a8f2b;
+  --accent-warning: #cf9236;
+  --accent-warning-hover: #e0aa4f;
+  --accent-warning-active: #a8742c;
+  --accent-danger: #dd6161;
+  --accent-danger-hover: #f07b7b;
+  --accent-danger-active: #b44d4d;
+  --accent-info: #7f8287;
+  --accent-info-hover: #9a9da3;
+  --accent-info-active: #666a70;
+
+  --el-color-primary: var(--accent-primary);
+  --el-color-success: var(--accent-success);
+  --el-color-warning: var(--accent-warning);
+  --el-color-danger: var(--accent-danger);
+  --el-color-info: var(--accent-info);
 }
 
 /* 应用主题变量 */
@@ -160,6 +225,36 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* 顶部日夜切换：日间（未选中）状态下轨道更浅、太阳图标更深 */
+.theme-toggle-switch:not(.is-checked) {
+  --el-switch-off-color: rgba(255, 255, 255, 0.55);
+  --el-switch-border-color: rgba(255, 255, 255, 0.75);
+}
+
+.theme-toggle-switch:not(.is-checked) .el-switch__core .el-switch__inner-wrapper {
+  color: #303133;
+}
+
+.theme-toggle-switch:not(.is-checked) .theme-toggle-icon {
+  filter: brightness(0.88) saturate(1.08) contrast(1.1);
+}
+
+.theme-toggle-switch .el-switch__core .el-switch__inner,
+.theme-toggle-switch .el-switch__core .el-switch__inner-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.theme-toggle-switch .theme-toggle-icon {
+  width: 14px;
+  height: 14px;
+  padding: 1px;
+  display: block;
+  object-fit: contain;
 }
 
 .app-aside {
@@ -225,10 +320,28 @@ body {
 }
 
 .dark-theme .el-select {
-  --el-select-input-focus-border-color: #409EFF;
+  --el-select-input-focus-border-color: var(--accent-primary);
 }
 
-.dark-theme .el-button {
+/* 按钮字号统一：日间/夜间一致，并按 size 规格化 */
+.el-button {
+  font-size: 14px;
+}
+
+.el-button--small {
+  font-size: 12px;
+}
+
+.el-button--default {
+  font-size: 14px;
+}
+
+.el-button--large {
+  font-size: 16px;
+}
+
+/* 仅对“默认按钮”（无 type / 非 text/link）应用深灰配色，避免把所有按钮都染灰 */
+.dark-theme .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--info):not(.is-text):not(.is-link) {
   --el-button-bg-color: var(--bg-secondary);
   --el-button-border-color: var(--border-color);
   --el-button-text-color: var(--text-primary);
@@ -238,7 +351,62 @@ body {
   --el-button-active-bg-color: var(--bg-tertiary);
   --el-button-active-text-color: var(--text-primary);
   --el-button-disabled-text-color: var(--text-tertiary);
-  font-size: 14px;
+}
+
+/* 彩色 type 按钮（filled） */
+.dark-theme .el-button--primary:not(.is-text):not(.is-link) {
+  --el-button-bg-color: var(--accent-primary);
+  --el-button-border-color: var(--accent-primary);
+  --el-button-text-color: #ffffff;
+  --el-button-hover-bg-color: var(--accent-primary-hover);
+  --el-button-hover-border-color: var(--accent-primary-hover);
+  --el-button-hover-text-color: #ffffff;
+  --el-button-active-bg-color: var(--accent-primary-active);
+  --el-button-active-border-color: var(--accent-primary-active);
+}
+
+.dark-theme .el-button--success:not(.is-text):not(.is-link) {
+  --el-button-bg-color: var(--accent-success);
+  --el-button-border-color: var(--accent-success);
+  --el-button-text-color: #ffffff;
+  --el-button-hover-bg-color: var(--accent-success-hover);
+  --el-button-hover-border-color: var(--accent-success-hover);
+  --el-button-hover-text-color: #ffffff;
+  --el-button-active-bg-color: var(--accent-success-active);
+  --el-button-active-border-color: var(--accent-success-active);
+}
+
+.dark-theme .el-button--warning:not(.is-text):not(.is-link) {
+  --el-button-bg-color: var(--accent-warning);
+  --el-button-border-color: var(--accent-warning);
+  --el-button-text-color: #ffffff;
+  --el-button-hover-bg-color: var(--accent-warning-hover);
+  --el-button-hover-border-color: var(--accent-warning-hover);
+  --el-button-hover-text-color: #ffffff;
+  --el-button-active-bg-color: var(--accent-warning-active);
+  --el-button-active-border-color: var(--accent-warning-active);
+}
+
+.dark-theme .el-button--danger:not(.is-text):not(.is-link) {
+  --el-button-bg-color: var(--accent-danger);
+  --el-button-border-color: var(--accent-danger);
+  --el-button-text-color: #ffffff;
+  --el-button-hover-bg-color: var(--accent-danger-hover);
+  --el-button-hover-border-color: var(--accent-danger-hover);
+  --el-button-hover-text-color: #ffffff;
+  --el-button-active-bg-color: var(--accent-danger-active);
+  --el-button-active-border-color: var(--accent-danger-active);
+}
+
+.dark-theme .el-button--info:not(.is-text):not(.is-link) {
+  --el-button-bg-color: var(--accent-info);
+  --el-button-border-color: var(--accent-info);
+  --el-button-text-color: #ffffff;
+  --el-button-hover-bg-color: var(--accent-info-hover);
+  --el-button-hover-border-color: var(--accent-info-hover);
+  --el-button-hover-text-color: #ffffff;
+  --el-button-active-bg-color: var(--accent-info-active);
+  --el-button-active-border-color: var(--accent-info-active);
 }
 
 /* 统一按钮文字/图标观感：图标大小一致，并继承按钮文字色 */
@@ -258,22 +426,45 @@ body {
   font-size: 16px;
 }
 
-/* 统一处理 text/link 按钮（如“返回实验组列表/返回实验结果列表”） */
-.dark-theme .el-button.is-text,
-.dark-theme .el-button.is-link {
+/* text/link 按钮：默认是浅灰文字；但如果带 type，则使用对应的彩色文字 */
+.dark-theme .el-button.is-text:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--info),
+.dark-theme .el-button.is-link:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--info) {
   color: var(--text-secondary) !important;
 }
 
 .dark-theme .el-button.is-text:hover,
 .dark-theme .el-button.is-link:hover {
   background-color: var(--hover-bg) !important;
-  color: var(--text-primary) !important;
 }
 
 .dark-theme .el-button.is-text:active,
 .dark-theme .el-button.is-link:active {
   background-color: var(--bg-tertiary) !important;
-  color: var(--text-primary) !important;
+}
+
+.dark-theme .el-button--primary.is-text,
+.dark-theme .el-button--primary.is-link {
+  color: var(--accent-primary) !important;
+}
+
+.dark-theme .el-button--success.is-text,
+.dark-theme .el-button--success.is-link {
+  color: var(--accent-success) !important;
+}
+
+.dark-theme .el-button--warning.is-text,
+.dark-theme .el-button--warning.is-link {
+  color: var(--accent-warning) !important;
+}
+
+.dark-theme .el-button--danger.is-text,
+.dark-theme .el-button--danger.is-link {
+  color: var(--accent-danger) !important;
+}
+
+.dark-theme .el-button--info.is-text,
+.dark-theme .el-button--info.is-link {
+  color: var(--accent-info) !important;
 }
 
 .dark-theme .el-dialog {
@@ -702,15 +893,50 @@ body {
 /* Segmented control */
 .dark-theme .el-segmented {
   background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  --el-segmented-bg-color: var(--bg-secondary);
+  --el-segmented-item-color: var(--text-secondary);
+  --el-segmented-item-hover-bg-color: var(--bg-tertiary);
+  --el-segmented-item-selected-bg-color: var(--bg-tertiary);
+  --el-segmented-item-selected-color: var(--text-primary);
 }
 
 .dark-theme .el-segmented__item {
   color: var(--text-secondary) !important;
 }
 
-.dark-theme .el-segmented__item.is-selected {
-  background-color: var(--card-bg) !important;
+.dark-theme .el-segmented__item:hover {
+  background-color: var(--bg-tertiary) !important;
   color: var(--text-primary) !important;
+}
+
+.dark-theme .el-segmented__item.is-selected {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 实验组列表：列表/卡片切换按钮在暗黑模式下使用主色高亮 */
+.dark-theme .group-viewmode-segmented.el-segmented {
+  border-color: var(--border-color) !important;
+  background-color: var(--bg-secondary) !important;
+  --el-segmented-bg-color: var(--bg-secondary);
+  --el-segmented-item-color: var(--text-secondary);
+  --el-segmented-item-hover-bg-color: var(--bg-tertiary);
+  --el-segmented-item-hover-color: var(--text-primary);
+  --el-segmented-item-selected-bg-color: var(--accent-primary);
+  --el-segmented-item-selected-color: #ffffff;
+}
+
+.dark-theme .group-viewmode-segmented .el-segmented__item.is-selected {
+  color: #ffffff !important;
+}
+
+.dark-theme .group-viewmode-segmented .el-segmented__item.is-selected .el-icon {
+  color: currentColor !important;
+}
+
+.dark-theme .group-viewmode-segmented .el-segmented__item:hover {
+  background-color: var(--bg-tertiary) !important;
 }
 
 /* ========== 分页组件 ========== */
@@ -986,6 +1212,10 @@ body {
 .dark-theme .params-config {
   background-color: var(--bg-secondary) !important;
   border: 1px solid var(--border-color) !important;
+}
+
+.dark-theme .params-config .param-section-title {
+  border-bottom-color: var(--border-color) !important;
 }
 
 .dark-theme .el-form-item {
@@ -1441,6 +1671,14 @@ body {
 }
 
 .dark-theme .tutorial-block h3 {
+  color: var(--text-primary) !important;
+}
+
+/* 系统设置：标题中的图标在暗黑模式下使用白色（避免沿用日间蓝色标题 icon） */
+.dark-theme .settings-content h2 .el-icon,
+.dark-theme .settings-content h3 .el-icon,
+.dark-theme .settings-content h4 .el-icon,
+.dark-theme .settings-content .preset-section-title > .el-icon {
   color: var(--text-primary) !important;
 }
 
